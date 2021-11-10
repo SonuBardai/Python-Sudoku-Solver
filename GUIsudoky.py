@@ -6,14 +6,27 @@ import requests
 import time
 
 size = 460
-back = 217, 237, 146
+back = 255, 183, 3
 qText = 2, 48, 71
-aText = 52, 160, 164
-winText = 255, 77, 109
-border = 2, 48, 71
+aText = 202, 103, 2
+winText = 255, 255, 255
+border = 0, 95, 115
 
-board = requests.get('https://sugoku.herokuapp.com/board?difficulty=easy').json()['board']  #GET BOARD
-boardCopy = [[board[i][j] for j in range(len(board))] for i in range(len(board))]   #CREATE A COPY OF THE BOARD
+def getNewBoard():
+    board = requests.get('https://sugoku.herokuapp.com/board?difficulty=easy').json()['board']  #GET BOARD
+    # board = [                         #EXAMPLE BOARD
+    #     [7,8,0,4,0,0,1,2,0],
+    #     [6,0,0,0,7,5,0,0,9],
+    #     [0,0,0,6,0,1,0,7,8],
+    #     [0,0,7,0,4,0,2,6,0],
+    #     [0,0,1,0,5,0,9,3,0],
+    #     [9,0,4,0,6,0,0,0,5],
+    #     [0,7,0,3,0,0,0,1,2],
+    #     [1,2,0,0,0,7,4,0,0],
+    #     [0,4,9,2,0,6,0,0,7]
+    # ]
+    boardCopy = [[board[i][j] for j in range(len(board))] for i in range(len(board))]   #CREATE A COPY OF THE BOARD
+    return board, boardCopy
 
 def getEmpty(board):    #GET NEXT EMPTY POSITION
     for i in range(len(board)):
@@ -64,7 +77,7 @@ def print_digit(board, boardCopy, digit, i, j, display, font):  # WRITES A DIGIT
     val = font.render(str(digit), True, aText)
     display.blit(val, (20+50*j, 50*i))
     pygame.display.update()
-    # pygame.time.wait(100)
+    pygame.time.wait(100)
 
 def print_board(board, boardCopy, color, display, font):    #DISPLAYS BOARD
     drawGrid(display)
@@ -102,7 +115,7 @@ def drawGrid(display):          #DRAW INITIAL EMPTY GRID
                              (5, 55+50*i), (455, 55+50*i), 2)
     pygame.display.update()
 
-def addNum(display, font, pos):         # PLAYER INSERTS DIGIT ON BOARD
+def addNum(display, font, pos, board, boardCopy):         # PLAYER INSERTS DIGIT ON BOARD
     i, j = pos[0]//50, pos[1]//50
     if((i, j) == (4, 9)):
         solve(board, boardCopy, display, font)
@@ -142,13 +155,6 @@ def addNum(display, font, pos):         # PLAYER INSERTS DIGIT ON BOARD
                             board[i][j] = boardCopy[i][j]
                     solve(board, boardCopy, display, font)
                 else: i, j = x, y
-                # if boardCopy[j][i] == 0:
-                #     return
-                # else: 
-                #     if event.key - 48 > 0:
-                #         print(event.key - 48)
-                #     else:
-                #         print("delete num")
 
 def win(display):
     print("Win")
@@ -156,15 +162,29 @@ def win(display):
     var = font.render("WIN", True, winText)
     display.blit(var, (150, 150))
     pygame.display.update()
+    pygame.draw.rect(display, border, (190, 475, 80, 30), border_radius=7)
+    font2 = pygame.font.SysFont("Verdana", 20)
+    val = font2.render("Retry", True, (255, 255, 255))
+    display.blit(val, (200, 477))
+    pygame.display.update()
+    for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            elif event.type == pygame.MOUSEBUTTONUP:
+                i, j = pygame.mouse.get_pos()[0]//50, pygame.mouse.get_pos()[1]//50
+                if (i, j) == (4, 9):
+                    pass
 
 def main():
+    board, boardCopy = getNewBoard()
     pygame.init()
     display = pygame.display.set_mode((size, size+50))
     pygame.display.set_caption("Sudoku")
     font = pygame.font.SysFont("Verdana", 40)       # SET FONT
     print_board(board, boardCopy, qText, display, font)     #CREATES PYGAME WINDOW AND DISPLAYS BOARD
 
-    pygame.draw.rect(display, (0, 0, 0), (190, 475, 80, 30), border_radius=7)
+    pygame.draw.rect(display, border, (190, 475, 80, 30), border_radius=7)
     font2 = pygame.font.SysFont("Verdana", 20)
     val = font2.render("Solve", True, (255, 255, 255))
     display.blit(val, (200, 477))
@@ -177,7 +197,7 @@ def main():
                 return
             elif event.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
-                addNum(display, font, pos)      
+                addNum(display, font, pos, board, boardCopy)      
 
 if __name__ == "__main__":
     main()
